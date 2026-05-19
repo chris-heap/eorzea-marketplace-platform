@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+
+# Poetry
+poetry.lock
+
+# Scala / sbt
+flink/target/
+flink/project/target/
+flink/project/project/
+*.class
+*.jar
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Docker
+docker-compose.override.yml
+
+# MinIO local data
+minio-data/
+
+# Airflow
+airflow/logs/
+airflow/airflow.db
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+*.tfvars
+!*.tfvars.example
+
+# Data
+data/
+*.parquet
+*.avro
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+*.log

@@ -1,0 +1,20 @@
+[project]
+name = "eorzea-producer"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Christopher Skowronski",email = "cskowronski44@gmail.com"}
+]
+readme = "README.md"
+requires-python = "^3.11"
+dependencies = [
+    "websockets (>=16.0,<17.0)",
+    "orjson (>=3.11.9,<4.0.0)",
+    "httpx (>=0.28.1,<0.29.0)",
+    "pymongo (>=4.17.0,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
