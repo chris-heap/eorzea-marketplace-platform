@@ -26,21 +26,41 @@ services:
     container_name: jobmanager
     ports:
       - 8081:8081
-    command: jobmanager
+    command: bash -c "cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/lib/ && /docker-entrypoint.sh jobmanager"
     environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      HADOOP_CONF_DIR: /opt/flink/conf
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
-
+        s3.endpoint: http://minio:9000
+        s3.access-key: minioadmin
+        s3.secret-key: minioadmin
+        s3.path.style.access: true
+    volumes:
+      - ./jars/hudi-flink1.18-bundle-0.15.0.jar:/opt/flink/lib/hudi-flink1.18-bundle-0.15.0.jar
+      - ./core-site.xml:/opt/flink/conf/core-site.xml
   taskmanager:
     image: flink:1.18-scala_2.12-java11
     container_name: taskmanager
     depends_on:
       - jobmanager
-    command: taskmanager
+    command: bash -c "cp /opt/flink/opt/flink-s3-fs-hadoop-*.jar /opt/flink/lib/ && /docker-entrypoint.sh taskmanager"
     environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      HADOOP_CONF_DIR: /opt/flink/conf
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
+        s3.endpoint: http://minio:9000
+        s3.access-key: minioadmin
+        s3.secret-key: minioadmin
+        s3.path.style.access: true
+    volumes:
+      - ./jars/hudi-flink1.18-bundle-0.15.0.jar:/opt/flink/lib/hudi-flink1.18-bundle-0.15.0.jar
+      - ./jars/avro-1.11.1.jar:/opt/flink/lib/avro-1.11.1.jar
+      - ./core-site.xml:/opt/flink/conf/core-site.xml
   minio:
     image: minio/minio:latest
     container_name: minio
