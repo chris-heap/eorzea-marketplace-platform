@@ -22,7 +22,7 @@ services:
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
   jobmanager:
-    image: flink:1.18-scala_2.12-java11
+    image: flink:1.16-scala_2.12-java11
     container_name: jobmanager
     ports:
       - 8081:8081
@@ -38,10 +38,10 @@ services:
         s3.secret-key: minioadmin
         s3.path.style.access: true
     volumes:
-      - ./jars/hudi-flink1.18-bundle-0.15.0.jar:/opt/flink/lib/hudi-flink1.18-bundle-0.15.0.jar
+      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
       - ./core-site.xml:/opt/flink/conf/core-site.xml
   taskmanager:
-    image: flink:1.18-scala_2.12-java11
+    image: flink:1.16-scala_2.12-java11
     container_name: taskmanager
     depends_on:
       - jobmanager
@@ -53,13 +53,13 @@ services:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
+        taskmanager.memory.process.size: 2048m
         s3.endpoint: http://minio:9000
         s3.access-key: minioadmin
         s3.secret-key: minioadmin
         s3.path.style.access: true
     volumes:
-      - ./jars/hudi-flink1.18-bundle-0.15.0.jar:/opt/flink/lib/hudi-flink1.18-bundle-0.15.0.jar
-      - ./jars/avro-1.11.1.jar:/opt/flink/lib/avro-1.11.1.jar
+      - ./jars/hudi-flink1.16-bundle-0.13.1.jar:/opt/flink/lib/hudi-flink1.16-bundle-0.13.1.jar
       - ./core-site.xml:/opt/flink/conf/core-site.xml
   minio:
     image: minio/minio:latest
