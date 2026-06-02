@@ -73,6 +73,49 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
+  ws-producer:
+    build:
+      context: ../../producer
+      dockerfile: Dockerfile
+    container_name: ws-producer
+    depends_on:
+      - broker
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: broker:29092
+    restart: unless-stopped
+  airflow-postgres:
+    image: postgres:15
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - airflow_pg_data:/var/lib/postgresql/data
+  airflow:
+    image: apache/airflow:2.10.5-python3.11
+    container_name: airflow
+    depends_on:
+      - airflow-postgres
+      - minio
+      - jobmanager
+    ports:
+      - 8080:8080
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      _PIP_ADDITIONAL_REQUIREMENTS: "dbt-duckdb duckdb"
+    volumes:
+      - ../../airflow/dags:/opt/airflow/dags
+      - ../../dbt/eorzea_analytics:/opt/airflow/dbt
+      - airflow_duckdb:/opt/airflow/dbt_output
+      - ../../flink/target/scala-2.12:/opt/airflow/flink-jars
+    command: bash -c "airflow db migrate && airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com 2>/dev/null; airflow webserver & airflow scheduler"
 
 volumes:
-  minio_data:      
+  minio_data:
+  airflow_pg_data:
+  airflow_duckdb:

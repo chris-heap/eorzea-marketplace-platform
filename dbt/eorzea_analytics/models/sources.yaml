@@ -1,0 +1,9 @@
+sources:
+  - name: raw
+    tables:
+      - name: market_listings
+        meta:
+          external_location: "read_parquet('s3://eorzea-lake/raw/market_listings/*/*/*.parquet', hive_partitioning=true)"
+      - name: sale_history
+        meta:
+          external_location: "read_parquet('s3://eorzea-lake/raw/sale_history/*/*/*.parquet', hive_partitioning=true)"

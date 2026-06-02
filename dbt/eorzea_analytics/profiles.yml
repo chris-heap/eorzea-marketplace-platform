@@ -3,11 +3,22 @@ eorzea_analytics:
   outputs:
     dev:
       type: duckdb
-      path: ":memory:"
+      path: "eorzea.duckdb"
       extensions:
         - httpfs
       settings:
         s3_endpoint: "localhost:9000"
+        s3_access_key_id: "minioadmin"
+        s3_secret_access_key: "minioadmin"
+        s3_use_ssl: false
+        s3_url_style: "path"
+    docker:
+      type: duckdb
+      path: "/opt/airflow/dbt/eorzea_docker.duckdb"
+      extensions:
+        - httpfs
+      settings:
+        s3_endpoint: "minio:9000"
         s3_access_key_id: "minioadmin"
         s3_secret_access_key: "minioadmin"
         s3_use_ssl: false

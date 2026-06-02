@@ -43,7 +43,9 @@ if __name__ == "__main__":
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s — %(message)s",
     )
-    pub = KafkaPublisher(broker_address="localhost:9092")
+    import os
+    broker = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+    pub = KafkaPublisher(broker_address=broker)
     try:
         asyncio.run(run(pub))
     finally:
