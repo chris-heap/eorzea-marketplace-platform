@@ -128,7 +128,7 @@ with DAG(
         python_callable=submit_flink_job,
     )
 
-    # Load seed data (item names, world names)
+    # Seed static data
     dbt_seed = BashOperator(
         task_id="dbt_seed",
         bash_command=(
@@ -137,7 +137,7 @@ with DAG(
         ),
     )
 
-    # Refresh dbt views and marts
+    # Refresh dbt models
     dbt_run = BashOperator(
         task_id="dbt_run",
         bash_command=(
