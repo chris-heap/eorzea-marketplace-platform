@@ -12,6 +12,7 @@ from pathlib import Path
 import glob
 import json
 import time
+import urllib.parse
 import urllib.request
 import urllib.error
 
@@ -87,7 +88,7 @@ def submit_flink_job():
         "parallelism": 1,
     }).encode()
     req = urllib.request.Request(
-        f"{FLINK_API}/jars/{jar_id}/run",
+        f"{FLINK_API}/jars/{urllib.parse.quote(jar_id, safe='')}/run",
         data=submit_data,
         method="POST",
         headers={"Content-Type": "application/json"},

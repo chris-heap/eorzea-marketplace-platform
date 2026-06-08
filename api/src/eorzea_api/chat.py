@@ -54,7 +54,7 @@ class EorzeaMarketChatAgent:
         self.db_path = db_path
 
         self.llm = ChatAnthropic(
-            model="claude-sonnet-4-20250514",
+            model="claude-haiku-4-5-20251001",
             anthropic_api_key=api_key,
             max_tokens=1024,
         )
@@ -64,8 +64,8 @@ class EorzeaMarketChatAgent:
         logger.info("Loaded table schemas:\n%s", self.table_schemas)
 
         self.sql_chain = (
-            ChatPromptTemplate.from_message([
-                ("system", SYSTEM_PROMPT)
+            ChatPromptTemplate.from_messages([
+                ("system", SYSTEM_PROMPT),
                 ("human", "{question}"),
             ])
             | self.llm
@@ -75,6 +75,7 @@ class EorzeaMarketChatAgent:
         self.summary_chain = (
             ChatPromptTemplate.from_messages([
                 ("system", SUMMARY_PROMPT),
+                ("human", "Summarize these results for me."),
             ])
             | self.llm
             | StrOutputParser()

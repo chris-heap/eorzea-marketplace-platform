@@ -27,6 +27,10 @@ object MarketIngestion {
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.enableCheckpointing(60000)
+    env.getCheckpointConfig.setCheckpointStorage("s3a://eorzea-lake/checkpoints")
+    env.getCheckpointConfig.setExternalizedCheckpointCleanup(
+      org.apache.flink.streaming.api.environment.CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION
+    )
 
     val tableEnv = StreamTableEnvironment.create(env)
     val bootstrapServers = sys.env.getOrElse("KAFKA_BOOTSTRAP_SERVERS", "broker:29092")

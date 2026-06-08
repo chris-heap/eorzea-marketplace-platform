@@ -6,7 +6,7 @@ val hudiVersion = "0.13.1"
 
 lazy val eorzeaIngestion = (project in file("."))
   .settings(
-    name := "Eorzea Ingestion",
+    name := "eorzea-ingestion",
     libraryDependencies ++= Seq(
         "org.apache.flink" %% "flink-streaming-scala"       % flinkVersion % "provided",
         "org.apache.flink"  % "flink-clients"                % flinkVersion % "provided",
