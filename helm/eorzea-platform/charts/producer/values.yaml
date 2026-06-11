@@ -1,0 +1,14 @@
+replicaCount: 1
+
+image:
+  repository: eorzea/ws-producer
+  tag: latest
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi

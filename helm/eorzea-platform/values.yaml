@@ -1,0 +1,25 @@
+# -- Eorzea Platform Umbrella Values --
+# Override subchart defaults here
+
+secrets:
+  anthropicApiKey: ""
+
+api:
+  replicaCount: 1
+  image:
+    tag: latest
+
+frontend:
+  replicaCount: 1
+  image:
+    tag: latest
+
+kafka:
+  replicaCount: 1
+
+minio:
+  persistence:
+    size: 5Gi
+
+producer:
+  replicaCount: 1

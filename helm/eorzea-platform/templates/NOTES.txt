@@ -1,0 +1,14 @@
+Eorzea Market Platform deployed!
+
+Services:
+  - API:       {{ .Release.Name }}-api:{{ .Values.api.port }}
+  - Frontend:  {{ .Release.Name }}-frontend:{{ .Values.frontend.port }}
+  - Kafka:     {{ .Release.Name }}-kafka:{{ .Values.kafka.port }}
+  - MinIO:     {{ .Release.Name }}-minio:{{ .Values.minio.port }}
+  - Producer:  {{ .Release.Name }}-producer
+
+Access the frontend:
+  kubectl port-forward svc/{{ .Release.Name }}-frontend {{ .Values.frontend.port }}:{{ .Values.frontend.port }}
+
+Access the API:
+  kubectl port-forward svc/{{ .Release.Name }}-api {{ .Values.api.port }}:{{ .Values.api.port }}
