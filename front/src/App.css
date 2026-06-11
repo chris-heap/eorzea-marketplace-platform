@@ -158,6 +158,44 @@
   border-radius: 12px 12px 12px 4px;
 }
 
+/* ---- Markdown inside chat ---- */
+.msg-text p {
+  margin: 0 0 8px;
+}
+
+.msg-text p:last-child {
+  margin-bottom: 0;
+}
+
+.msg-text strong {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.msg-text ul, .msg-text ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.msg-text li {
+  margin-bottom: 4px;
+}
+
+.msg-text code {
+  background: var(--bg-input);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.msg-text h1, .msg-text h2, .msg-text h3 {
+  color: var(--text-bright);
+  margin: 8px 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .msg-sql {
   margin-top: 10px;
   font-size: 12px;

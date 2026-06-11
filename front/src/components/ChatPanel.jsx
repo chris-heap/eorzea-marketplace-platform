@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Markdown from "react-markdown";
 import { chatQuery } from "../api/client";
 
 function ChatPanel() {
@@ -47,7 +48,9 @@ function ChatPanel() {
         )}
         {messages.map((msg, i) => (
           <div key={i} className={`chat-msg ${msg.role}`}>
-            <div className="msg-text">{msg.text}</div>
+            <div className="msg-text">
+              <Markdown>{msg.text}</Markdown>
+            </div>
             {msg.sql && (
               <details className="msg-sql">
                 <summary>SQL ({msg.rows} rows)</summary>

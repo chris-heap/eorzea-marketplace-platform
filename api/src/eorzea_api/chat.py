@@ -5,8 +5,10 @@ import logging
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from eorzea_api.database import DuckDBConnect
+from eorzea_api.tools import create_tools
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +17,7 @@ SYSTEM_PROMPT = """You are an FFXIV Market Board analyst. You answer questions a
 {table_schemas}
 
 Rules:
+- Use your tools first to look up exact item names, data centers, or price context before writing SQL
 - Write a single SQL query to answer the user's question
 - Return only the SQL query wrapped in ```sql ... ``` tags
 - Use the exact column names shown above
@@ -23,7 +26,6 @@ Rules:
 - For world lookups, use world_name (not world_id) when possible
 """
 
-# After executing the SQL, this prompt asks Claude to summarize the results.
 SUMMARY_PROMPT = """You are an FFXIV Market Board analyst. The user asked: "{question}"
 
 You ran this SQL query:
@@ -45,12 +47,13 @@ def _extract_sql(text: str) -> str:
         return match.group(1).strip()
     return text.strip()
 
+
 class EorzeaMarketChatAgent:
     def __init__(self, db_path: str):
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
             raise ValueError("ANTHROPIC_API_KEY environment variable is required.")
-        
+
         self.db_path = db_path
 
         self.llm = ChatAnthropic(
@@ -63,15 +66,12 @@ class EorzeaMarketChatAgent:
             self.table_schemas = db.get_information_schema()
         logger.info("Loaded table schemas:\n%s", self.table_schemas)
 
-        self.sql_chain = (
-            ChatPromptTemplate.from_messages([
-                ("system", SYSTEM_PROMPT),
-                ("human", "{question}"),
-            ])
-            | self.llm
-            | StrOutputParser()
-        )
+        # Tools for FFXIV domain knowledge
+        self.tools = create_tools(db_path)
+        self.tools_by_name = {t.name: t for t in self.tools}
+        self.llm_with_tools = self.llm.bind_tools(self.tools)
 
+        # Summary chain doesn't need tools — just plain LLM
         self.summary_chain = (
             ChatPromptTemplate.from_messages([
                 ("system", SUMMARY_PROMPT),
@@ -82,17 +82,60 @@ class EorzeaMarketChatAgent:
         )
 
     def ask(self, question: str) -> dict:
-        """Take a natural language question, generate SQL, execute, and summarize the results."""
+        """Take a natural language question, optionally call tools, generate SQL, execute, and summarize."""
 
-        ## Give Claude the schemas + question, get SQL back
-        sql_response = self.sql_chain.invoke({
-            "table_schemas": self.table_schemas,
-            "question": question,
-        })
-        sql = _extract_sql(sql_response)
+        # Build the initial message with system context + user question
+        messages = [
+            SystemMessage(content=SYSTEM_PROMPT.format(table_schemas=self.table_schemas)),
+            HumanMessage(content=question),
+        ]
+
+        # Loop: let Claude call tools until it gives a text response
+        max_iterations = 5
+        for i in range(max_iterations):
+            response = self.llm_with_tools.invoke(messages)
+            messages.append(response)
+
+            # If no tool calls, Claude is done — it should have SQL in its response
+            if not response.tool_calls:
+                break
+
+            # Execute each tool call and feed results back
+            for tool_call in response.tool_calls:
+                tool_name = tool_call["name"]
+                tool_args = tool_call["args"]
+                logger.info("Tool call: %s(%s)", tool_name, tool_args)
+
+                tool_fn = self.tools_by_name.get(tool_name)
+                if tool_fn:
+                    tool_result = tool_fn.invoke(tool_args)
+                else:
+                    tool_result = f"Unknown tool: {tool_name}"
+
+                messages.append(ToolMessage(
+                    content=str(tool_result),
+                    tool_call_id=tool_call["id"],
+                ))
+
+        # Check if Claude responded with SQL or answered directly from tools
+        raw_content = response.content
+        has_sql = "```sql" in raw_content
+
+        if not has_sql:
+            # TRICKY: handle case where Claude answered directly from tool results — no SQL needed
+            logger.info("Agent answered directly from tools (no SQL)")
+            return {
+                "question": question,
+                "sql": "",
+                "rows": 0,
+                "answer": raw_content,
+                "data": [],
+            }
+
+        # Extract and run SQL
+        sql = _extract_sql(raw_content)
         logger.info("Generated SQL: %s", sql)
 
-        # Run returned SQL against DuckDB
         with DuckDBConnect(self.db_path) as db:
             try:
                 result = db.execute(sql).fetchdf()
@@ -108,7 +151,7 @@ class EorzeaMarketChatAgent:
         results_str = result.head(20).to_string(index=False)
         logger.info("Query returned %d rows", len(result))
 
-        # Give results to Claude and get summary
+        # Summarize with plain LLM (no tools needed here)
         summary = self.summary_chain.invoke({
             "question": question,
             "sql": sql,
