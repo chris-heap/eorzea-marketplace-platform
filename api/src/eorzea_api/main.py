@@ -3,11 +3,17 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
 from fastapi.middleware.cors import CORSMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
 from eorzea_api.models.chat_models import ChatRequest, ChatResponse
 
+import eorzea_api.telemetry
 from eorzea_api.chat import EorzeaMarketChatAgent
-from eorzea_api.database import DuckDBConnect
+from eorzea_api.database import DuckDBConnect 
+from prometheus_client import generate_latest
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,6 +46,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+FastAPIInstrumentor.instrument_app(app)
 
 @app.get("/health")
 def health():
@@ -95,3 +102,7 @@ def get_velocity(limit: int = 20):
             LIMIT {limit}
         """).fetchdf()
         return df.to_dict(orient="records")
+
+@app.get("/metrics")
+def get_metrics():
+    return Response(content=generate_latest(), media_type="text/plain")
