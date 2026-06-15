@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import time
 
 from langchain_anthropic import ChatAnthropic
 from langchain_core.prompts import ChatPromptTemplate
@@ -9,6 +10,10 @@ from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from eorzea_api.database import DuckDBConnect
 from eorzea_api.tools import create_tools
+from eorzea_api.telemetry import (
+    token_input_counter, token_output_counter, cost_counter,
+    tool_call_counter, request_duration, agent_loop_iterations,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -83,18 +88,26 @@ class EorzeaMarketChatAgent:
 
     def ask(self, question: str) -> dict:
         """Take a natural language question, optionally call tools, generate SQL, execute, and summarize."""
+        start_time = time.time()
 
         # Build the initial message with system context + user question
         messages = [
             SystemMessage(content=SYSTEM_PROMPT.format(table_schemas=self.table_schemas)),
             HumanMessage(content=question),
         ]
-
+        
         # Loop: let Claude call tools until it gives a text response
         max_iterations = 5
         for i in range(max_iterations):
             response = self.llm_with_tools.invoke(messages)
             messages.append(response)
+
+            usage = response.response_metadata.get("usage", {})
+            input_toks = usage.get("input_tokens", 0)
+            output_toks = usage.get("output_tokens", 0)
+            token_input_counter.add(input_toks)
+            token_output_counter.add(output_toks)
+            cost_counter.add((input_toks * 1.0 + output_toks * 5.0) / 1_000_000)
 
             # If no tool calls, Claude is done — it should have SQL in its response
             if not response.tool_calls:
@@ -105,10 +118,12 @@ class EorzeaMarketChatAgent:
                 tool_name = tool_call["name"]
                 tool_args = tool_call["args"]
                 logger.info("Tool call: %s(%s)", tool_name, tool_args)
+                tool_call_counter.add(1, {"tool_name": tool_name})
 
                 tool_fn = self.tools_by_name.get(tool_name)
                 if tool_fn:
                     tool_result = tool_fn.invoke(tool_args)
+                    
                 else:
                     tool_result = f"Unknown tool: {tool_name}"
 
@@ -117,12 +132,14 @@ class EorzeaMarketChatAgent:
                     tool_call_id=tool_call["id"],
                 ))
 
+        agent_loop_iterations.record(i + 1)
+
         # Check if Claude responded with SQL or answered directly from tools
         raw_content = response.content
         has_sql = "```sql" in raw_content
 
         if not has_sql:
-            # TRICKY: handle case where Claude answered directly from tool results — no SQL needed
+            request_duration.record((time.time() - start_time) * 1000)
             logger.info("Agent answered directly from tools (no SQL)")
             return {
                 "question": question,
@@ -157,6 +174,8 @@ class EorzeaMarketChatAgent:
             "sql": sql,
             "results": results_str,
         })
+
+        request_duration.record((time.time() - start_time) * 1000)
 
         return {
             "question": question,
