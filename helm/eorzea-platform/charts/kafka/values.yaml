@@ -1,0 +1,16 @@
+replicaCount: 1
+
+image:
+  repository: confluentinc/cp-kafka
+  tag: "7.5.0"
+  pullPolicy: IfNotPresent
+
+port: 9092
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi

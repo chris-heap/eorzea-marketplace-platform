@@ -1,0 +1,21 @@
+dependencies:
+- name: api
+  repository: file://charts/api
+  version: 0.1.0
+- name: frontend
+  repository: file://charts/frontend
+  version: 0.1.0
+- name: kafka
+  repository: file://charts/kafka
+  version: 0.1.0
+- name: minio
+  repository: file://charts/minio
+  version: 0.1.0
+- name: producer
+  repository: file://charts/producer
+  version: 0.1.0
+- name: airflow
+  repository: https://airflow.apache.org
+  version: 1.15.0
+digest: sha256:cb69d04f43b1ccecb83d7355a4d248ae916524803cb9292a4fb29e18f2aa8325
+generated: "2026-06-12T16:48:00.8753797-04:00"

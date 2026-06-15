@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-minio
+  labels:
+    app: eorzea-minio
+    release: {{ .Release.Name }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: eorzea-minio
+  template:
+    metadata:
+      labels:
+        app: eorzea-minio
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: minio
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["server", "/data", "--console-address", ":{{ .Values.consolePort }}"]
+          ports:
+            - containerPort: {{ .Values.port }}
+              name: api
+            - containerPort: {{ .Values.consolePort }}
+              name: console
+          env:
+            - name: MINIO_ROOT_USER
+              value: {{ .Values.accessKey | quote }}
+            - name: MINIO_ROOT_PASSWORD
+              value: {{ .Values.secretKey | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-minio-pvc

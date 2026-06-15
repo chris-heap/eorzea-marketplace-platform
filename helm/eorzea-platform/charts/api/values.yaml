@@ -1,0 +1,20 @@
+replicaCount: 1
+
+image:
+  repository: eorzea/api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+port: 8000
+
+env:
+  PYTHONPATH: "src"
+  DB_PATH: "/data/eorzea.duckdb"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

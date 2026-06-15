@@ -1,3 +1,4 @@
+import os
 import logging
 from contextlib import asynccontextmanager
 
@@ -13,7 +14,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s — %(message)s",
 )
 
-DB_PATH = "../dbt/eorzea_analytics/eorzea.duckdb"
+DB_PATH = os.environ.get("DB_PATH", "../dbt/eorzea_analytics/eorzea.duckdb")
 agent: EorzeaMarketChatAgent | None = None
 
 

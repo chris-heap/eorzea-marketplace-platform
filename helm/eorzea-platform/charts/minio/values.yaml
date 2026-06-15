@@ -1,0 +1,24 @@
+replicaCount: 1
+
+image:
+  repository: minio/minio
+  tag: latest
+  pullPolicy: IfNotPresent
+
+port: 9000
+consolePort: 9001
+
+accessKey: minioadmin
+secretKey: minioadmin
+bucketName: eorzea-lake
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+persistence:
+  size: 5Gi
