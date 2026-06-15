@@ -14,5 +14,8 @@ dependencies:
 - name: producer
   repository: file://charts/producer
   version: 0.1.0
-digest: sha256:a74bda575c40017638fbf0de28519915d7e9965e50fb7b08b3fbfcc4d5fb14c8
-generated: "2026-06-11T17:54:26.1840481-04:00"
+- name: airflow
+  repository: https://airflow.apache.org
+  version: 1.15.0
+digest: sha256:cb69d04f43b1ccecb83d7355a4d248ae916524803cb9292a4fb29e18f2aa8325
+generated: "2026-06-12T16:48:00.8753797-04:00"

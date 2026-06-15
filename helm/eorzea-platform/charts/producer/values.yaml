@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: eorzea/ws-producer
+  repository: eorzea/producer
   tag: latest
   pullPolicy: IfNotPresent
 

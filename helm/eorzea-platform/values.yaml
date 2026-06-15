@@ -1,6 +1,4 @@
 # -- Eorzea Platform Umbrella Values --
-# Override subchart defaults here
-
 secrets:
   anthropicApiKey: ""
 
@@ -23,3 +21,21 @@ minio:
 
 producer:
   replicaCount: 1
+
+airflow:
+  executor: LocalExecutor
+  redis:
+    enabled: false
+  flower:
+    enabled: false
+  dags:
+    gitSync:
+      enabled: true
+      repo: "https://github.com/chris-heap/eorzea-marketplace-platform.git"
+      branch: main
+      subPath: "airflow/dags"
+      wait: 60
+  postgresql:
+    image:
+      tag: "latest"
+

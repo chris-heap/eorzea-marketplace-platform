@@ -21,3 +21,6 @@ dependencies:
   - name: producer
     version: 0.1.0
     repository: "file://charts/producer"
+  - name: airflow
+    version: "1.15.0"
+    repository: "https://airflow.apache.org"
