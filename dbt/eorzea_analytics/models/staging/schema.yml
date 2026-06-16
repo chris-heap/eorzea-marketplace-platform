@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: stg_listings
+    description: Cleaned market board listings
+    columns:
+      - name: listing_id
+        tests:
+          - not_null:
+              severity: warn
+          - unique:
+              severity: warn
+      - name: item_id
+        tests:
+          - not_null:
+              severity: warn
+      - name: world_id
+        tests:
+          - not_null:
+              severity: warn
+      - name: price_per_unit
+        tests:
+          - not_null:
+              severity: warn
+      - name: quantity
+        tests:
+          - not_null:
+              severity: warn
+
+  - name: stg_sales
+    description: Cleaned sale history
+    columns:
+      - name: item_id
+        tests:
+          - not_null:
+              severity: warn
+      - name: world_id
+        tests:
+          - not_null:
+              severity: warn
+      - name: price_per_unit
+        tests:
+          - not_null:
+              severity: warn
+      - name: quantity
+        tests:
+          - not_null:
+              severity: warn

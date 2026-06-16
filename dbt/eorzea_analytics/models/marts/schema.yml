@@ -1,0 +1,73 @@
+version: 2
+
+models:
+  - name: mart_price_summary
+    description: Aggregated price stats per item/world/HQ combination
+    columns:
+      - name: item_id
+        tests:
+          - not_null
+      - name: world_id
+        tests:
+          - not_null
+      - name: item_name
+        tests:
+          - not_null
+      - name: listing_count
+        tests:
+          - not_null
+      - name: min_price
+        tests:
+          - not_null
+
+  - name: mart_cross_world_arbitrage
+    description: Cross-world price spreads for arbitrage opportunities
+    columns:
+      - name: item_id
+        tests:
+          - not_null
+      - name: world_id
+        tests:
+          - not_null
+      - name: profit_margin_pct
+        tests:
+          - not_null
+
+  - name: mart_hq_premium
+    description: Price premium of HQ items over NQ equivalents
+    columns:
+      - name: item_id
+        tests:
+          - not_null
+      - name: hq_avg_price
+        tests:
+          - not_null
+      - name: nq_avg_price
+        tests:
+          - not_null
+
+  - name: mart_market_velocity
+    description: Sales volume and velocity per item/world/date
+    columns:
+      - name: item_id
+        tests:
+          - not_null
+      - name: sale_count
+        tests:
+          - not_null
+      - name: total_volume
+        tests:
+          - not_null
+
+  - name: mart_price_history
+    description: Daily price history per item/world
+    columns:
+      - name: item_id
+        tests:
+          - not_null
+      - name: sale_date
+        tests:
+          - not_null
+      - name: sale_count
+        tests:
+          - not_null

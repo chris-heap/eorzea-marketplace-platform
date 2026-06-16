@@ -1,0 +1,25 @@
+version: 2
+
+seeds:
+  - name: item_names
+    description: XIVAPI item ID to name mapping
+    columns:
+      - name: item_id
+        tests:
+          - not_null
+          - unique
+      - name: item_name
+        tests:
+          - not_null
+
+  - name: world_names
+    description: Universalis world ID to name mapping
+    columns:
+      - name: world_id
+        tests:
+          - not_null
+          - unique
+      - name: world_name
+        tests:
+          - not_null
+          - unique
