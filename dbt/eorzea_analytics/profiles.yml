@@ -12,6 +12,15 @@ eorzea_analytics:
         s3_secret_access_key: "minioadmin"
         s3_use_ssl: false
         s3_url_style: "path"
+    bigquery:
+      type: bigquery
+      method: service-account
+      project: eorzea-market
+      dataset: eorzea_marketplace_01
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      threads: 4
+      timeout_seconds: 300
+      location: northamerica-northeast2
     docker:
       type: duckdb
       path: "/opt/airflow/dbt/eorzea_docker.duckdb"
