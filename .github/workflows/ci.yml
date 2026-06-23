@@ -97,10 +97,10 @@ jobs:
         run: pip install ruff
 
       - name: Lint api
-        run: ruff check api/ --select E,F,I
+        run: ruff check api/
 
       - name: Lint producer
-        run: ruff check producer/ --select E,F,I
+        run: ruff check producer/
 
   frontend-build:
     name: Frontend build
