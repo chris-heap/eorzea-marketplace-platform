@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
 from eorzea_api.models.chat_models import ChatRequest, ChatResponse
 
-import eorzea_api.telemetry
+import eorzea_api.telemetry  # noqa: F401
 from eorzea_api.chat import EorzeaMarketChatAgent
 from eorzea_api.database import DuckDBConnect 
 from prometheus_client import generate_latest

@@ -128,12 +128,12 @@ def create_tools(db_path: str) -> list:
 
         listings = [
             MarketListing(
-                quality="HQ" if l.get("hq") else "NQ",
-                quantity=l.get("quantity", 0),
-                price_per_unit=l.get("pricePerUnit", 0),
-                total=l.get("total", 0),
+                quality="HQ" if listing.get("hq") else "NQ",
+                quantity=listing.get("quantity", 0),
+                price_per_unit=listing.get("pricePerUnit", 0),
+                total=listing.get("total", 0),
             )
-            for l in data.get("listings", [])[:5]
+            for listing in data.get("listings", [])[:5]
         ]
 
         recent_sales = [

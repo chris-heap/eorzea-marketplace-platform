@@ -17,7 +17,8 @@ from eorzea_api.telemetry import (
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are an FFXIV Market Board analyst. You answer questions about market data by writing DuckDB SQL queries against the following tables:
+SYSTEM_PROMPT = """You are an FFXIV Market Board analyst. You answer questions about market data \
+by writing DuckDB SQL queries against the following tables:
 
 {table_schemas}
 
