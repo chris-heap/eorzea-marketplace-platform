@@ -15,4 +15,6 @@ tool_call_counter = meter.create_counter("llm.tool_calls", description="Tool inv
 
 
 request_duration = meter.create_histogram("chat.request.duration_ms", description="Chat request duration")
-agent_loop_iterations = meter.create_histogram("chat.agent_loop.iterations", description="Agent loop iterations per request")
+agent_loop_iterations = meter.create_histogram(
+    "chat.agent_loop.iterations", description="Agent loop iterations per request"
+)
