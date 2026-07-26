@@ -7,14 +7,17 @@ Orchestrates the data pipeline:
 3. Runs dbt tests for data quality
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import glob
 import json
+import os
+import re
 import time
 import urllib.parse
 import urllib.request
 import urllib.error
+import boto3
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
@@ -26,6 +29,23 @@ FLINK_API = "http://jobmanager:8081"
 FLINK_JAR_DIR = "/opt/airflow/flink-jars"
 FLINK_MAIN_CLASS = "com.eorzea.MarketIngestion"
 
+#### Defaults to minio local config for minio preflight check
+S3_ENDPOINT = os.environ.get("MINIO_ENDPOINT", "http://minio:9000")
+S3_BUCKET = os.environ.get("EORZEA_BUCKET", "eorzea-lake")
+S3_KEY = os.environ.get("AWS_ACCESS_KEY_ID", "minioadmin")
+S3_SECRET = os.environ.get("AWS_SECRET_ACCESS_KEY", "minioadmin")
+
+HUDI_TABLE_PREFIXES = ["raw/market_listings", "raw/sale_history"]
+
+# Options for cleaning up Hudi in preflight check
+CLEANABLE_ACTIONS = {"deltacommit", "commit", "rollback"}
+
+# Minimum age to clean up instant of. It may belong to a writer that is
+# currently running
+MIN_INSTANT_AGE_MINUTES = 15
+
+_INSTANT_RE = re.compile(r"^(\d{17})\.(.+)$")
+
 
 def _flink_api(path, method="GET", data=None):
     """Helper to call the Flink REST API."""
@@ -36,6 +56,68 @@ def _flink_api(path, method="GET", data=None):
         req = urllib.request.Request(url, method=method)
     response = urllib.request.urlopen(req, timeout=15)
     return json.loads(response.read().decode("utf-8"))
+
+
+def clean_stuck_hudi_instants():
+    """Clear orphaned Hudi timeline markers left behind by unclean shutdowns."""
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=S3_ENDPOINT,
+        aws_access_key_id=S3_KEY,
+        aws_secret_access_key=S3_SECRET,
+    )
+
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=MIN_INSTANT_AGE_MINUTES)
+    total_removed = 0
+
+    for table in HUDI_TABLE_PREFIXES:
+        prefix = f"{table}/.hoodie/"
+        instants = {}
+
+        paginator = s3.get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=prefix):
+            for obj in page.get("Contents", []):
+                name = obj["Key"][len(prefix):]
+                if "/" in name:  # skip .aux/, .temp/, .schema/, archived/
+                    continue
+                match = _INSTANT_RE.match(name)
+                if match:
+                    instants.setdefault(match.group(1), {})[match.group(2)] = obj["Key"]
+
+        orphaned = []
+        for instant_id, suffixes in instants.items():
+            if any(not s.endswith((".inflight", ".requested")) for s in suffixes):
+                continue  # a completed file exists — instant is healthy
+
+            actions = {s.split(".")[0] for s in suffixes}
+            if not actions <= CLEANABLE_ACTIONS:
+                print(f"  {table} {instant_id}: action {actions} not cleanable, leaving alone")
+                continue
+
+            try:
+                started = datetime.strptime(instant_id, "%Y%m%d%H%M%S%f").replace(
+                    tzinfo=timezone.utc
+                )
+            except ValueError:
+                print(f"  {table} {instant_id}: unparseable instant id, leaving alone")
+                continue
+
+            if started > cutoff:
+                age_s = int((datetime.now(timezone.utc) - started).total_seconds())
+                print(f"  {table} {instant_id}: only {age_s}s old — may be live, leaving alone")
+                continue
+
+            orphaned.append((instant_id, suffixes))
+
+        for instant_id, suffixes in sorted(orphaned):
+            for suffix, key in sorted(suffixes.items()):
+                s3.delete_object(Bucket=S3_BUCKET, Key=key)
+                print(f"  removed {instant_id}.{suffix}")
+                total_removed += 1
+
+        print(f"{table}: {len(instants)} instants scanned, {len(orphaned)} orphaned")
+
+    print(f"Hudi pre-flight complete — {total_removed} orphaned marker(s) removed")
 
 
 def submit_flink_job():
@@ -122,6 +204,13 @@ with DAG(
     tags=["eorzea", "dbt", "flink", "market-data"],
 ) as dag:
 
+    # Clear orphaned Hudi timeline markers before Flink starts.
+    # Without this, one unclean shutdown wedges the job in a permanent restart loop.
+    clean_hudi = PythonOperator(
+        task_id="clean_stuck_hudi_instants",
+        python_callable=clean_stuck_hudi_instants,
+    )
+
     # Ensure the Flink ingestion job is running
     # Uploads and submits the fat jar via Flink REST API if needed
     submit_flink = PythonOperator(
@@ -156,4 +245,4 @@ with DAG(
         ),
     )
 
-    submit_flink >> dbt_seed >> dbt_run >> dbt_test
+    clean_hudi >> submit_flink >> dbt_seed >> dbt_run >> dbt_test
