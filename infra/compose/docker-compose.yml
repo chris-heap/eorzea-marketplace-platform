@@ -19,8 +19,10 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    volumes:
+      - kafka_data:/var/lib/kafka/data
   jobmanager:
     image: flink:1.16-scala_2.12-java11
     container_name: jobmanager
@@ -137,3 +139,4 @@ volumes:
   minio_data:
   airflow_pg_data:
   airflow_duckdb:
+  kafka_data:
